@@ -30,7 +30,7 @@ import java.io.FileWriter;
 
 %{
 
-private ArrayList tokensList; /* aca se guardaran las salidas de los input */
+private ArrayList tokensList; /* aca se guardaran las salidas de los input verificados */
 
 private void writeOutputFile() throws IOException { /* metodo para escribir la entrada final del fichero */
 	String filename = "archivosalida.out";
@@ -44,11 +44,10 @@ private void writeOutputFile() throws IOException { /* metodo para escribir la e
 %}
 
 
-TerminadorLinea = \r|\n|\r\n
-Espacio = {TerminadorLinea} | [ \t\f]
-Identifier  = [a-zA-Z\0,]
-Empty=""
 
+Identifier  = [a-zA-Z\0,]
+Empty=[""_]
+Rule=[a-zA-Z\0,]
 %{
 	private Symbol sym(int type)
 	{
@@ -70,8 +69,25 @@ Empty=""
 ANY			=	.
 
 %%
-{Identifier}+"("{Identifier}|{Empty}*+")"+"."    {this.tokensList.add(yyline+ yycolumn);}
+{Identifier}+"("{Identifier}|{Empty}*+")"+"."    {this.tokensList.add(yytext());}
+{Rule}+"("{Rule}|{Empty}*+")"+":"+"-"{Identifier}+"("{Identifier}|{Empty}*+")"+","+ {this.tokensList.add(yytext());}
+"write"+"("+{Rule}+")"   {System.out.println({Rule});}
+"nl" {\n;}
+"fail" {this.tokensList.add(yytext());}
 
 
+/*con esta ignoramos tabulaciones,*/
+[\t\r\f] {}
+
+/*con la siguiente linesa ignoramos los espacios en blanco*/
+(" ")   {System.out.println("espacio");}
+/* con la siguiente linea determinamos el final del archivo*/
+
+<<EOF>>  {this.writeOutputFile();}
+/* validando tokens*/
+"int"   {System.out.println("int token invalido");}
+"if"     {System.out.println("if token invalido");}
+"then"     {System.out.println("then token invalido");}
+"for"    {System.out.println("for token invalido");}
 {ANY}		{	return sym(ANY); }
 
